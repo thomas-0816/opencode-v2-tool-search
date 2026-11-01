@@ -81,10 +81,10 @@ The package is not published to npm yet. Once it is, add
 ## Example: llama.cpp
 
 This configuration was used to test the plugin with a local `llama.cpp` server.
-It restricts provider use to `llama.cpp`, asks before shell/edit/web actions,
-disables Code Mode and several built-in tools, and loads the plugin from
-`../opencode-v2-tool-search`. Adjust the `baseURL`, model limits, and plugin path
-for your setup.
+It restricts provider use to `llama.cpp`, asks before shell/edit/web actions and
+before reading outside the project, disables Code Mode and several built-in
+tools, and loads the plugin from `../opencode-v2-tool-search`. Adjust the
+`baseURL`, model limits, and plugin path for your setup.
 
 opencode.json:
 
@@ -99,22 +99,16 @@ opencode.json:
     { "action": "provider.use", "resource": "llama.cpp", "effect": "allow" }
   ],
   "permissions": [
+    { "action": "external_directory", "resource": "*", "effect": "ask" },
     { "action": "shell", "resource": "*", "effect": "ask" },
     { "action": "edit", "resource": "*", "effect": "ask" },
-    { "action": "websearch", "resource": "*", "effect": "ask" },
-    { "action": "webfetch", "resource": "*", "effect": "ask" },
+    { "action": "web*", "resource": "*", "effect": "ask" },
     { "action": "todowrite", "resource": "*", "effect": "deny" },
     { "action": "skill", "resource": "*", "effect": "deny" },
     { "action": "subagent", "resource": "*", "effect": "deny" },
     { "action": "read", "resource": "*.env*", "effect": "deny" },
     { "action": "execute", "resource": "*", "effect": "deny" },
-    { "action": "opencode_models", "resource": "*", "effect": "deny" },
-    { "action": "opencode_list_mcp_resources", "resource": "*", "effect": "deny" },
-    { "action": "opencode_read_mcp_resource", "resource": "*", "effect": "deny" },
-    { "action": "opencode_session_rename", "resource": "*", "effect": "deny" },
-    { "action": "opencode_session_move", "resource": "*", "effect": "deny" },
-    { "action": "opencode_worktree_create", "resource": "*", "effect": "deny" },
-    { "action": "opencode_worktree_list", "resource": "*", "effect": "deny" }
+    { "action": "opencode_*", "resource": "*", "effect": "deny" }
   ],
   "plugins": ["../opencode-v2-tool-search"],
   "agents": {
