@@ -123,7 +123,14 @@ opencode.json:
     { "action": "opencode_worktree_create", "resource": "*", "effect": "deny" },
     { "action": "opencode_worktree_list", "resource": "*", "effect": "deny" }
   ],
-  "plugins": ["../opencode-v2-tool-search"],
+  "plugins": [
+    {
+      "package": "../opencode-v2-tool-search",
+      "options": {
+        "alwaysLoad": ["shell", "read", "edit", "write", "glob", "grep"]
+      }
+    }
+  ],
   "agents": {
     "build": { "system": "A helpful software assistant." },
     "plan": { "system": "A helpful software assistant." },
@@ -222,21 +229,36 @@ use the built-in worktree tools and want the guidance kept.
 
 ## Token savings
 
-Measured on OpenCode 2.2.3 with a local `llama.cpp` model and 11 built-in tools:
+Measured on OpenCode 2.2.3 with a local `llama.cpp` server running Mellum2 12B
+A2.5B and the same prompt. "Current config" refers to the configuration under
+[Example: llama.cpp](#example-llamacpp).
 
-| Setup                                                | Input tokens |
-| ---------------------------------------------------- | ------------ |
-| Without the plugin                                   | ~2,509       |
-| Defer everything (`stripParameters: true`)           | ~957         |
-| Keep core tools loaded, `compact: false`             | ~2,252       |
-| Keep core tools loaded, `compact: true`, hint kept   | ~1,202       |
-| Keep core tools loaded, `compact: true` (default)    | ~1,150       |
+| Setup                                            | Input tokens |
+| ------------------------------------------------ | ------------ |
+| Default OpenCode V2 config, `providers` only     | 5,714        |
+| Current config without the tool-search plugin    | 2,513        |
+| Current config with the tool-search plugin       | 1,150        |
 
-Deferring everything gives the largest reduction, but the model must search
-before using any tool. Keeping the core tools loaded with `compact: true` is
-more robust and still cuts the same setup from ~2,252 to ~1,150 tokens
-(about 49%). Removing the worktree hint accounts for roughly 52 of those tokens.
-Savings grow as more tools are available, especially MCP tools. Numbers are
+The plugin alone reduces the current config from 2,513 to 1,150 input tokens
+(about 54%). The full current config reduces the default prompt from 5,714 to
+1,150 tokens (about 80%, roughly 5x smaller). The difference between the default
+config and the current config without the plugin comes from the short agent
+system prompt and the denied tools, not from this plugin.
+
+Prompt details:
+
+- Default config: full standard system prompt, 12 tools with full descriptions,
+  worktree hint present.
+- Current config: short system prompt, 11 tools with compact or deferred
+  descriptions, worktree hint removed.
+
+Prompt dumps were tokenized with the llama.cpp `/tokenize` endpoint:
+5,750 / 2,513 / 1,150 tokens. OpenCode reports 5,714 / 2,513 / 1,150; the
+default-prompt difference is chat-template overhead.
+
+The current-config measurement also used a small project plugin that removes the
+remaining `skill` and `opencode_*` tools; with only the permission rules above,
+those tools may still appear and add a small number of tokens. Numbers are
 approximate and vary by model and tool set.
 
 ## Further token reduction with RTK
