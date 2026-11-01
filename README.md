@@ -47,9 +47,7 @@ Clone this repository and point `plugins` at it:
     {
       "package": "<path-to-plugin>/opencode-v2-tool-search",
       "options": {
-        "searchLimit": 5,
-        "stripParameters": true,
-        "includeSchema": true,
+        "alwaysLoad": ["shell", "read", "edit", "write", "glob", "grep"]
       },
     },
   ],
