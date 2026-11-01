@@ -186,6 +186,36 @@ Measured on OpenCode 2.2.3 with a local `llama.cpp` model and 11 built-in tools:
 That is roughly a 62% reduction for that setup. Savings grow as more tools are
 available, especially MCP tools.
 
+## Further token reduction with RTK
+
+This plugin reduces the tokens spent on tool descriptions. [RTK](https://github.com/rtk-ai/rtk)
+reduces the tokens spent on shell command output by compressing it before the
+model reads it. The two work together.
+
+Install RTK:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh
+```
+
+Then install the OpenCode integration:
+
+```sh
+rtk init -g --opencode
+```
+
+RTK rewrites shell commands to their `rtk` equivalents, so commands such as
+`git status`, `grep`, and test runs return compact output. Verify the install
+with:
+
+```sh
+rtk --version
+rtk gain
+```
+
+`rtk gain` shows the measured savings. The OpenCode integration requires
+OpenCode 1.18.29 or newer.
+
 ## Caveats
 
 - The model must search before calling a deferred tool. The plugin adds a short
