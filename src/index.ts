@@ -33,6 +33,10 @@ interface SearchOptions {
   stripParameters?: boolean
   /** Include the full JSON Schema in search results. Default: true. */
   includeSchema?: boolean
+  /** Shorten always-loaded tools and strip their parameter descriptions. Default: true. */
+  compact?: boolean
+  /** Override the built-in compact descriptions by tool ID. */
+  descriptions?: Record<string, string>
   bm25?: { k1?: number; b?: number }
 }
 
@@ -43,8 +47,28 @@ const DEFAULT_OPTIONS = {
   deferDescription: "[d]",
   stripParameters: true,
   includeSchema: true,
+  compact: true,
   bm25: { k1: 0.9, b: 0.4 },
 } as const
+
+// Short descriptions for tools that stay loaded. They keep the guidance that
+// matters for correct calls while removing the long-form prose.
+const COMPACT_DESCRIPTIONS: Record<string, string> = {
+  read: "Read a file or list a directory. Text lines are numbered. Use offset/limit to page.",
+  write: "Create or overwrite a file. Use edit for partial changes.",
+  edit: "Replace exact text in a file. oldString must match once unless replaceAll is true. Preserve indentation; omit line-number prefixes.",
+  glob: "Find files by glob pattern.",
+  grep: "Search file contents with regex or literal text. Narrow with path/include.",
+  shell: "Run a shell command. Use workdir instead of cd; set timeout for long commands; background for servers.",
+  patch: "Apply a multi-file patch.",
+  webfetch: "Fetch a URL as markdown, text, or HTML.",
+  websearch: "Search the web for current information.",
+  question: "Ask the user a question with choices.",
+  skill: "Load a skill's instructions.",
+  subagent: "Start a child agent with a prompt.",
+  execute: "Run JavaScript in Code Mode to call tools.",
+  todowrite: "Track multi-step work with a todo list.",
+}
 
 // ---------------------------------------------------------------------------
 // BM25
@@ -162,6 +186,54 @@ function normalizeSchema(input: unknown): JsonSchema {
   return { type: "object", properties: {} }
 }
 
+// Remove "description" annotations from a JSON Schema while keeping property
+// names, types, required fields, defaults, and other constraints.
+function stripSchemaDescriptions(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(stripSchemaDescriptions)
+  if (!value || typeof value !== "object") return value
+
+  const input = value as Record<string, unknown>
+  const output: Record<string, unknown> = {}
+
+  for (const [key, child] of Object.entries(input)) {
+    if (key === "description") continue
+
+    if (key === "properties" && child && typeof child === "object") {
+      const properties: Record<string, unknown> = {}
+      for (const [name, schema] of Object.entries(child as Record<string, unknown>)) {
+        properties[name] = stripSchemaDescriptions(schema)
+      }
+      output[key] = properties
+      continue
+    }
+
+    if (key === "items" || key === "additionalProperties" || key === "not") {
+      output[key] = stripSchemaDescriptions(child)
+      continue
+    }
+
+    if (key === "anyOf" || key === "oneOf" || key === "allOf") {
+      output[key] = Array.isArray(child) ? child.map(stripSchemaDescriptions) : child
+      continue
+    }
+
+    if (key === "$defs" || key === "definitions") {
+      const definitions: Record<string, unknown> = {}
+      if (child && typeof child === "object") {
+        for (const [name, schema] of Object.entries(child as Record<string, unknown>)) {
+          definitions[name] = stripSchemaDescriptions(schema)
+        }
+      }
+      output[key] = definitions
+      continue
+    }
+
+    output[key] = child
+  }
+
+  return output
+}
+
 // ---------------------------------------------------------------------------
 // Plugin
 // ---------------------------------------------------------------------------
@@ -175,6 +247,8 @@ export default Plugin.define({
     const deferDescription = options.deferDescription ?? DEFAULT_OPTIONS.deferDescription
     const stripParameters = options.stripParameters ?? DEFAULT_OPTIONS.stripParameters
     const includeSchema = options.includeSchema ?? DEFAULT_OPTIONS.includeSchema
+    const compact = options.compact ?? DEFAULT_OPTIONS.compact
+    const descriptions = { ...COMPACT_DESCRIPTIONS, ...(options.descriptions ?? {}) }
     const k1 = options.bm25?.k1 ?? DEFAULT_OPTIONS.bm25.k1
     const b = options.bm25?.b ?? DEFAULT_OPTIONS.bm25.b
 
@@ -216,7 +290,17 @@ export default Plugin.define({
       let deferred = 0
       for (const [id, tool] of Object.entries(event.tools)) {
         total++
-        if (SEARCH_TOOL_IDS.has(id) || alwaysLoad.has(id)) continue
+        if (SEARCH_TOOL_IDS.has(id)) continue
+
+        if (alwaysLoad.has(id)) {
+          if (compact) {
+            const description = descriptions[id]
+            if (description) tool.description = description
+            tool.input = stripSchemaDescriptions(tool.input) as JsonSchema
+          }
+          continue
+        }
+
         tool.description = deferDescription
         if (stripParameters) tool.input = { type: "object", properties: {} }
         deferred++

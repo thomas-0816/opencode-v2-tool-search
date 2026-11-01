@@ -23,6 +23,9 @@ or `tool_search_regex` and gets the full description and JSON Schema back.
 - Tools not in `alwaysLoad` get the description `[d]`.
 - With `stripParameters` enabled (the default), deferred tools also get an empty
   parameter schema.
+- With `compact` enabled (the default), always-loaded tools use short
+  descriptions and lose parameter descriptions while keeping names, types, and
+  required fields.
 - `tool_search` ranks tools with BM25 over names and descriptions.
 - `tool_search_regex` matches tool names and descriptions with a case-insensitive
   regex.
@@ -199,6 +202,8 @@ files and paths for your setup.
 | `deferDescription` | `string`   | `"[d]"` | Stub description used for deferred tools.                                |
 | `stripParameters`  | `boolean`  | `true`  | Replace deferred tools' parameter schema with an empty object.           |
 | `includeSchema`    | `boolean`  | `true`  | Include the full JSON Schema in search results.                          |
+| `compact`          | `boolean`  | `true`  | Shorten always-loaded tools and strip their parameter descriptions.      |
+| `descriptions`     | `object`   | `{}`    | Override compact descriptions by tool ID.                                |
 | `bm25.k1`          | `number`   | `0.9`   | BM25 term-frequency saturation.                                          |
 | `bm25.b`           | `number`   | `0.4`   | BM25 document-length normalization.                                      |
 
@@ -217,13 +222,17 @@ it uses most to `alwaysLoad`:
 
 Measured on OpenCode 2.2.3 with a local `llama.cpp` model and 11 built-in tools:
 
-| Setup                            | Input tokens |
-| -------------------------------- | ------------ |
-| Without the plugin               | ~2,509       |
-| With `stripParameters: true`     | ~957         |
+| Setup                                      | Input tokens |
+| ------------------------------------------ | ------------ |
+| Without the plugin                         | ~2,509       |
+| Defer everything (`stripParameters: true`) | ~957         |
+| Keep core tools loaded, `compact: false`   | ~2,252       |
+| Keep core tools loaded, `compact: true`    | ~1,370       |
 
-That is roughly a 62% reduction for that setup. Savings grow as more tools are
-available, especially MCP tools.
+Deferring everything gives the largest reduction, but the model must search
+before using any tool. Keeping the core tools loaded with `compact: true` is
+more robust and still cuts the same setup from ~2,252 to ~1,370 tokens
+(about 39%). Savings grow as more tools are available, especially MCP tools.
 
 ## Further token reduction with RTK
 
