@@ -219,11 +219,11 @@ Measured on OpenCode 2.2.3 with a local `llama.cpp` server running Mellum2 12B
 A2.5B and the same prompt. The rows below refer to the
 [optimized opencode.json](#example-llamacpp).
 
-| Setup                                                           | Input tokens |
-| --------------------------------------------------------------- | ------------ |
-| Default OpenCode V2 config, `providers` only                    | 5,714        |
-| [optimized opencode.json](#example-llamacpp) without the plugin | 2,513        |
-| [optimized opencode.json](#example-llamacpp) with the plugin    | 1,150        |
+| Setup                                                           |  Bytes | Input tokens |
+| --------------------------------------------------------------- | -----: | -----------: |
+| Default OpenCode V2 config, `providers` only                    | 24,294 |        5,714 |
+| [optimized opencode.json](#example-llamacpp) without the plugin | 10,636 |        2,513 |
+| [optimized opencode.json](#example-llamacpp) with the plugin    |  4,324 |        1,150 |
 
 The plugin alone reduces the example config from 2,513 to 1,150 input tokens
 (about 54%). The full example config reduces the default prompt from 5,714 to
