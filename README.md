@@ -73,12 +73,83 @@ git clone git@github.com:thomas-0816/opencode-v2-tool-search.git
 
 ```jsonc
 {
-  "plugins": ["../opencode-v2-tool-search"],
+  "plugins": ["<path-to-plugin>/opencode-v2-tool-search"],
 }
 ```
 
 The package is not published to npm yet. Once it is, add
 `"opencode-v2-tool-search"` to `plugins` and let OpenCode install it.
+
+## Example: llama.cpp
+
+This configuration was used to test the plugin with a local `llama.cpp` server.
+It restricts provider use to `llama.cpp`, asks before shell/edit/web actions,
+disables Code Mode and several built-in tools, and loads the plugin from
+`../opencode-v2-tool-search`. Adjust the `baseURL`, model limits, and plugin path
+for your setup.
+
+```jsonc title="opencode.json"
+{
+  "$schema": "https://opencode.ai/config.json",
+  "lsp": false,
+  "snapshots": false,
+  "share": "disabled",
+  "policies": [
+    { "action": "provider.use", "resource": "*", "effect": "deny" },
+    { "action": "provider.use", "resource": "llama.cpp", "effect": "allow" }
+  ],
+  "permissions": [
+    { "action": "shell", "resource": "*", "effect": "ask" },
+    { "action": "edit", "resource": "*", "effect": "ask" },
+    { "action": "websearch", "resource": "*", "effect": "ask" },
+    { "action": "webfetch", "resource": "*", "effect": "ask" },
+    { "action": "todowrite", "resource": "*", "effect": "deny" },
+    { "action": "skill", "resource": "*", "effect": "deny" },
+    { "action": "subagent", "resource": "*", "effect": "deny" },
+    { "action": "read", "resource": "*.env*", "effect": "deny" },
+    { "action": "execute", "resource": "*", "effect": "deny" },
+    { "action": "opencode_models", "resource": "*", "effect": "deny" },
+    { "action": "opencode_list_mcp_resources", "resource": "*", "effect": "deny" },
+    { "action": "opencode_read_mcp_resource", "resource": "*", "effect": "deny" },
+    { "action": "opencode_session_rename", "resource": "*", "effect": "deny" },
+    { "action": "opencode_session_move", "resource": "*", "effect": "deny" },
+    { "action": "opencode_worktree_create", "resource": "*", "effect": "deny" },
+    { "action": "opencode_worktree_list", "resource": "*", "effect": "deny" }
+  ],
+  "plugins": ["../opencode-v2-tool-search"],
+  "agents": {
+    "build": { "system": "A helpful software assistant." },
+    "plan": { "system": "A helpful software assistant." },
+    "title": { "disabled": true },
+    "summary": { "disabled": true }
+  },
+  "providers": {
+    "llama.cpp": {
+      "package": "aisdk:@ai-sdk/openai-compatible",
+      "name": "Llama.cpp",
+      "settings": { "baseURL": "http://127.0.0.1:9931/v1" },
+      "models": {
+        "default": {
+          "name": "Default",
+          "limit": { "context": 131072, "output": 131072 },
+          "body": { "chat_template_kwargs": { "enable_thinking": false } },
+          "variants": [
+            {
+              "id": "thinking",
+              "body": {
+                "chat_template_kwargs": {
+                  "enable_thinking": true,
+                  "preserve_thinking": true
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+```
 
 ## Options
 
