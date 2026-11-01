@@ -216,33 +216,33 @@ use the built-in worktree tools and want the guidance kept.
 ## Token savings
 
 Measured on OpenCode 2.2.3 with a local `llama.cpp` server running Mellum2 12B
-A2.5B and the same prompt. "Current config" refers to the configuration under
+A2.5B and the same prompt. The rows below refer to the configuration in
 [Example: llama.cpp](#example-llamacpp).
 
-| Setup                                            | Input tokens |
-| ------------------------------------------------ | ------------ |
-| Default OpenCode V2 config, `providers` only     | 5,714        |
-| Current config without the tool-search plugin    | 2,513        |
-| Current config with the tool-search plugin       | 1,150        |
+| Setup                                                      | Input tokens |
+| ---------------------------------------------------------- | ------------ |
+| Default OpenCode V2 config, `providers` only               | 5,714        |
+| [Example: llama.cpp](#example-llamacpp) without the plugin | 2,513        |
+| [Example: llama.cpp](#example-llamacpp) with the plugin    | 1,150        |
 
-The plugin alone reduces the current config from 2,513 to 1,150 input tokens
-(about 54%). The full current config reduces the default prompt from 5,714 to
+The plugin alone reduces the example config from 2,513 to 1,150 input tokens
+(about 54%). The full example config reduces the default prompt from 5,714 to
 1,150 tokens (about 80%, roughly 5x smaller). The difference between the default
-config and the current config without the plugin comes from the short agent
+config and the example config without the plugin comes from the short agent
 system prompt and the denied tools, not from this plugin.
 
 Prompt details:
 
 - Default config: full standard system prompt, 12 tools with full descriptions,
   worktree hint present.
-- Current config: short system prompt, 11 tools with compact or deferred
+- Example config: short system prompt, 11 tools with compact or deferred
   descriptions, worktree hint removed.
 
 Prompt dumps were tokenized with the llama.cpp `/tokenize` endpoint:
 5,750 / 2,513 / 1,150 tokens. OpenCode reports 5,714 / 2,513 / 1,150; the
 default-prompt difference is chat-template overhead.
 
-The current-config measurement also used a small project plugin that removes the
+The example-config measurement also used a small project plugin that removes the
 remaining `skill` and `opencode_*` tools; with only the permission rules above,
 those tools may still appear and add a small number of tokens. Numbers are
 approximate and vary by model and tool set.
