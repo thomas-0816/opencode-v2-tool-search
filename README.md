@@ -45,7 +45,7 @@ Clone this repository and point `plugins` at it:
   "$schema": "https://opencode.ai/config.json",
   "plugins": [
     {
-      "package": "../opencode-v2-tool-search",
+      "package": "<path-to-plugin>/opencode-v2-tool-search",
       "options": {
         "searchLimit": 5,
         "stripParameters": true,
@@ -65,11 +65,20 @@ below.
 
 ### From GitHub
 
+Clone the repository and point `plugins` at the clone:
+
 ```sh
-npm install github:thomas-0816/opencode-v2-tool-search
+git clone git@github.com:thomas-0816/opencode-v2-tool-search.git
 ```
 
-Then add `"opencode-v2-tool-search"` to `plugins`.
+```jsonc
+{
+  "plugins": ["../opencode-v2-tool-search"],
+}
+```
+
+The package is not published to npm yet. Once it is, add
+`"opencode-v2-tool-search"` to `plugins` and let OpenCode install it.
 
 ## Options
 
