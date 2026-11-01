@@ -227,12 +227,13 @@ Measured on OpenCode 2.2.3 with a local `llama.cpp` model and 11 built-in tools:
 | Without the plugin                         | ~2,509       |
 | Defer everything (`stripParameters: true`) | ~957         |
 | Keep core tools loaded, `compact: false`   | ~2,252       |
-| Keep core tools loaded, `compact: true`    | ~1,370       |
+| Keep core tools loaded, `compact: true`    | ~1,202       |
 
 Deferring everything gives the largest reduction, but the model must search
 before using any tool. Keeping the core tools loaded with `compact: true` is
-more robust and still cuts the same setup from ~2,252 to ~1,370 tokens
-(about 39%). Savings grow as more tools are available, especially MCP tools.
+more robust and still cuts the same setup from ~2,252 to ~1,202 tokens
+(about 47%). Savings grow as more tools are available, especially MCP tools.
+Numbers are approximate and vary by model and tool set.
 
 ## Further token reduction with RTK
 

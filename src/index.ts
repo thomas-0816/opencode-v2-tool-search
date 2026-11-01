@@ -54,12 +54,12 @@ const DEFAULT_OPTIONS = {
 // Short descriptions for tools that stay loaded. They keep the guidance that
 // matters for correct calls while removing the long-form prose.
 const COMPACT_DESCRIPTIONS: Record<string, string> = {
-  read: "Read a file or list a directory. Text lines are numbered. Use offset/limit to page.",
-  write: "Create or overwrite a file. Use edit for partial changes.",
-  edit: "Replace exact text in a file. oldString must match once unless replaceAll is true. Preserve indentation; omit line-number prefixes.",
+  read: "Read a file or list a directory. Use offset/limit to page.",
+  write: "Create or overwrite a file.",
+  edit: "Replace exact text. oldString must be unique unless replaceAll. Omit line-number prefixes.",
   glob: "Find files by glob pattern.",
-  grep: "Search file contents with regex or literal text. Narrow with path/include.",
-  shell: "Run a shell command. Use workdir instead of cd; set timeout for long commands; background for servers.",
+  grep: "Search file contents with regex or literal text.",
+  shell: "Run a shell command. Use workdir instead of cd; set timeout/background when needed.",
   patch: "Apply a multi-file patch.",
   webfetch: "Fetch a URL as markdown, text, or HTML.",
   websearch: "Search the web for current information.",
@@ -309,7 +309,7 @@ export default Plugin.define({
       if (deferred > 0) {
         event.system.push({
           type: "text",
-          text: `[Tool Search] ${deferred} of ${total} tools are deferred and marked "${deferDescription}". Call tool_search("<keywords>") or tool_search_regex("<pattern>") to get a deferred tool's full description and parameters before using it. Search before concluding a capability is unavailable.`,
+          text: `[Tool Search] ${deferred}/${total} tools are deferred ("${deferDescription}"). Call tool_search("<keywords>") before using one; search if unsure.`,
         })
       }
     }
@@ -317,18 +317,11 @@ export default Plugin.define({
     await ctx.tool.transform((editor) => {
       editor.add({
         name: "tool_search",
-        description: [
-          "Search available tools by keyword (BM25 ranking).",
-          'Tools whose description is just "[d]" are deferred: call this first to get the full description and parameters, then call the tool.',
-          'Example: tool_search({ query: "read file" })',
-        ].join("\n"),
+        description: "Search tools by keyword. Call before using a [d] tool.",
         input: {
           type: "object",
           properties: {
-            query: {
-              type: "string",
-              description: "Keywords describing the capability you need",
-            },
+            query: { type: "string" },
           },
           required: ["query"],
           additionalProperties: false,
@@ -348,18 +341,11 @@ export default Plugin.define({
 
       editor.add({
         name: "tool_search_regex",
-        description: [
-          "Search available tools by case-insensitive regex over tool names and descriptions.",
-          'Tools whose description is just "[d]" are deferred: call this first to get the full description and parameters, then call the tool.',
-          'Example: tool_search_regex({ pattern: "read|write" })',
-        ].join("\n"),
+        description: "Search tools by regex. Call before using a [d] tool.",
         input: {
           type: "object",
           properties: {
-            pattern: {
-              type: "string",
-              description: "Regex pattern matched against tool names and descriptions",
-            },
+            pattern: { type: "string" },
           },
           required: ["pattern"],
           additionalProperties: false,
