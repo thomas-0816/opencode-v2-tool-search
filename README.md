@@ -26,6 +26,8 @@ or `tool_search_regex` and gets the full description and JSON Schema back.
 - With `compact` enabled (the default), always-loaded tools use short
   descriptions and lose parameter descriptions while keeping names, types, and
   required fields.
+- The built-in worktree/`session_move` hint is removed from the system prompt by
+  default.
 - `tool_search` ranks tools with BM25 over names and descriptions.
 - `tool_search_regex` matches tool names and descriptions with a case-insensitive
   regex.
@@ -43,7 +45,9 @@ reduced, so tool execution and validation still use the real schemas.
 
 Clone this repository and point `plugins` at it:
 
-```jsonc title="opencode.jsonc"
+opencode.json:
+
+```jsonc
 {
   "$schema": "https://opencode.ai/config.json",
   "plugins": [
@@ -89,7 +93,9 @@ disables Code Mode and several built-in tools, and loads the plugin from
 `../opencode-v2-tool-search`. Adjust the `baseURL`, model limits, and plugin path
 for your setup.
 
-```jsonc title="opencode.json"
+opencode.json:
+
+```jsonc
 {
   "$schema": "https://opencode.ai/config.json",
   "lsp": false,
@@ -141,15 +147,7 @@ for your setup.
                 "chat_template_kwargs": {
                   "enable_thinking": true,
                   "preserve_thinking": true
-                }
-              }
-            }
-          ]
-        }
-      }
-    }
-  }
-}
+}}}]}}}}}
 ```
 
 ### Example server commands
@@ -195,17 +193,18 @@ files and paths for your setup.
 
 ## Options
 
-| Option             | Type       | Default | Description                                                              |
-| ------------------ | ---------- | ------- | ------------------------------------------------------------------------ |
-| `alwaysLoad`       | `string[]` | `[]`    | Tool IDs that keep their full description and schema.                    |
-| `searchLimit`      | `number`   | `5`     | Maximum number of results returned by a search.                          |
-| `deferDescription` | `string`   | `"[d]"` | Stub description used for deferred tools.                                |
-| `stripParameters`  | `boolean`  | `true`  | Replace deferred tools' parameter schema with an empty object.           |
-| `includeSchema`    | `boolean`  | `true`  | Include the full JSON Schema in search results.                          |
-| `compact`          | `boolean`  | `true`  | Shorten always-loaded tools and strip their parameter descriptions.      |
-| `descriptions`     | `object`   | `{}`    | Override compact descriptions by tool ID.                                |
-| `bm25.k1`          | `number`   | `0.9`   | BM25 term-frequency saturation.                                          |
-| `bm25.b`           | `number`   | `0.4`   | BM25 document-length normalization.                                      |
+| Option               | Type       | Default | Description                                                              |
+| -------------------- | ---------- | ------- | ------------------------------------------------------------------------ |
+| `alwaysLoad`         | `string[]` | `[]`    | Tool IDs that keep their full description and schema.                    |
+| `searchLimit`        | `number`   | `5`     | Maximum number of results returned by a search.                          |
+| `deferDescription`   | `string`   | `"[d]"` | Stub description used for deferred tools.                                |
+| `stripParameters`    | `boolean`  | `true`  | Replace deferred tools' parameter schema with an empty object.           |
+| `includeSchema`      | `boolean`  | `true`  | Include the full JSON Schema in search results.                          |
+| `compact`            | `boolean`  | `true`  | Shorten always-loaded tools and strip their parameter descriptions.      |
+| `descriptions`       | `object`   | `{}`    | Override compact descriptions by tool ID.                                |
+| `removeWorktreeHint` | `boolean`  | `true`  | Remove the built-in worktree/`session_move` hint from the system prompt. |
+| `bm25.k1`            | `number`   | `0.9`   | BM25 term-frequency saturation.                                          |
+| `bm25.b`             | `number`   | `0.4`   | BM25 document-length normalization.                                      |
 
 If a model tends to call deferred tools without searching first, add the tools
 it uses most to `alwaysLoad`:
@@ -218,22 +217,27 @@ it uses most to `alwaysLoad`:
 }
 ```
 
+`removeWorktreeHint` only affects the system prompt. Set it to `false` if you
+use the built-in worktree tools and want the guidance kept.
+
 ## Token savings
 
 Measured on OpenCode 2.2.3 with a local `llama.cpp` model and 11 built-in tools:
 
-| Setup                                      | Input tokens |
-| ------------------------------------------ | ------------ |
-| Without the plugin                         | ~2,509       |
-| Defer everything (`stripParameters: true`) | ~957         |
-| Keep core tools loaded, `compact: false`   | ~2,252       |
-| Keep core tools loaded, `compact: true`    | ~1,202       |
+| Setup                                                | Input tokens |
+| ---------------------------------------------------- | ------------ |
+| Without the plugin                                   | ~2,509       |
+| Defer everything (`stripParameters: true`)           | ~957         |
+| Keep core tools loaded, `compact: false`             | ~2,252       |
+| Keep core tools loaded, `compact: true`, hint kept   | ~1,202       |
+| Keep core tools loaded, `compact: true` (default)    | ~1,150       |
 
 Deferring everything gives the largest reduction, but the model must search
 before using any tool. Keeping the core tools loaded with `compact: true` is
-more robust and still cuts the same setup from ~2,252 to ~1,202 tokens
-(about 47%). Savings grow as more tools are available, especially MCP tools.
-Numbers are approximate and vary by model and tool set.
+more robust and still cuts the same setup from ~2,252 to ~1,150 tokens
+(about 49%). Removing the worktree hint accounts for roughly 52 of those tokens.
+Savings grow as more tools are available, especially MCP tools. Numbers are
+approximate and vary by model and tool set.
 
 ## Further token reduction with RTK
 
@@ -264,6 +268,30 @@ rtk gain
 
 `rtk gain` shows the measured savings. The OpenCode integration requires
 OpenCode 1.18.29 or newer.
+
+## Optional OpenCode V2 settings
+
+### Disable the background service
+
+Edit `~/.config/opencode/service.json` and add:
+
+```json
+{
+  "disabled": true
+}
+```
+
+### Disable tabs
+
+Edit `~/.config/opencode/cli.json` and add:
+
+```json
+{
+  "tabs": { "mode": "off" }
+}
+```
+
+If either file already exists, merge the key into its existing JSON object.
 
 ## Caveats
 

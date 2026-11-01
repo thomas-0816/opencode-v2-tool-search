@@ -37,6 +37,8 @@ interface SearchOptions {
   compact?: boolean
   /** Override the built-in compact descriptions by tool ID. */
   descriptions?: Record<string, string>
+  /** Remove the built-in worktree/session_move hint from the system prompt. Default: true. */
+  removeWorktreeHint?: boolean
   bm25?: { k1?: number; b?: number }
 }
 
@@ -48,8 +50,14 @@ const DEFAULT_OPTIONS = {
   stripParameters: true,
   includeSchema: true,
   compact: true,
+  removeWorktreeHint: true,
   bm25: { k1: 0.9, b: 0.4 },
 } as const
+
+// OpenCode's built-in tools plugin adds this hint to the system prompt. It is
+// only useful when worktrees are enabled, so the plugin removes it by default.
+const WORKTREE_HINT_PREFIX =
+  "When you create a worktree outside the current working directory"
 
 // Short descriptions for tools that stay loaded. They keep the guidance that
 // matters for correct calls while removing the long-form prose.
@@ -234,6 +242,12 @@ function stripSchemaDescriptions(value: unknown): unknown {
   return output
 }
 
+function stripWorktreeHint(system: Array<{ type: "text"; text: string }>): void {
+  for (let i = system.length - 1; i >= 0; i--) {
+    if (system[i].text.startsWith(WORKTREE_HINT_PREFIX)) system.splice(i, 1)
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Plugin
 // ---------------------------------------------------------------------------
@@ -249,6 +263,7 @@ export default Plugin.define({
     const includeSchema = options.includeSchema ?? DEFAULT_OPTIONS.includeSchema
     const compact = options.compact ?? DEFAULT_OPTIONS.compact
     const descriptions = { ...COMPACT_DESCRIPTIONS, ...(options.descriptions ?? {}) }
+    const removeWorktreeHint = options.removeWorktreeHint ?? DEFAULT_OPTIONS.removeWorktreeHint
     const k1 = options.bm25?.k1 ?? DEFAULT_OPTIONS.bm25.k1
     const b = options.bm25?.b ?? DEFAULT_OPTIONS.bm25.b
 
@@ -284,6 +299,7 @@ export default Plugin.define({
       system: Array<{ type: "text"; text: string }>
       tools: Record<string, { description: string; input: JsonSchema }>
     }) {
+      if (removeWorktreeHint) stripWorktreeHint(event.system)
       capture(event.sessionID, event.tools)
 
       let total = 0
