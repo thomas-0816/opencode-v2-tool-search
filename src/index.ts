@@ -37,7 +37,14 @@ interface SearchOptions {
 }
 
 const SEARCH_TOOL_IDS = new Set(["tool_search", "tool_search_regex"])
-const DEFAULT_DEFER_DESCRIPTION = "[d]"
+
+const DEFAULT_OPTIONS = {
+  searchLimit: 5,
+  deferDescription: "[d]",
+  stripParameters: true,
+  includeSchema: true,
+  bm25: { k1: 0.9, b: 0.4 },
+} as const
 
 // ---------------------------------------------------------------------------
 // BM25
@@ -164,12 +171,12 @@ export default Plugin.define({
   async setup(ctx) {
     const options = (ctx.options ?? {}) as SearchOptions
     const alwaysLoad = new Set([...SEARCH_TOOL_IDS, ...(options.alwaysLoad ?? [])])
-    const searchLimit = options.searchLimit ?? 5
-    const deferDescription = options.deferDescription ?? DEFAULT_DEFER_DESCRIPTION
-    const stripParameters = options.stripParameters ?? true
-    const includeSchema = options.includeSchema ?? true
-    const k1 = options.bm25?.k1 ?? 0.9
-    const b = options.bm25?.b ?? 0.4
+    const searchLimit = options.searchLimit ?? DEFAULT_OPTIONS.searchLimit
+    const deferDescription = options.deferDescription ?? DEFAULT_OPTIONS.deferDescription
+    const stripParameters = options.stripParameters ?? DEFAULT_OPTIONS.stripParameters
+    const includeSchema = options.includeSchema ?? DEFAULT_OPTIONS.includeSchema
+    const k1 = options.bm25?.k1 ?? DEFAULT_OPTIONS.bm25.k1
+    const b = options.bm25?.b ?? DEFAULT_OPTIONS.bm25.b
 
     // The context hook sees the exact tools that will be sent to the model.
     // Keep the unmodified snapshot so search results include full schemas.
