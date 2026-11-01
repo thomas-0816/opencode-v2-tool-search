@@ -151,6 +151,47 @@ for your setup.
 }
 ```
 
+### Example server commands
+
+The plugin was tested with these local `llama.cpp` servers. Adjust the model
+files and paths for your setup.
+
+**Qwen3.6 35B A3B**
+
+```sh
+./llama-server -hf unsloth/Qwen3.6-35B-A3B-MTP-GGUF:UD-Q4_K_XL \
+  --parallel 1 --ctx-size 131072 --predict 131072 --ubatch-size 1024 \
+  --temp 0.6 --min-p 0.0 --top-p 0.95 --top-k 20 --no-mmproj \
+  --cache-type-k q8_0 --cache-type-v q8_0 --load-mode dio --spec-type draft-mtp
+```
+
+**Qwen3.8 27B**
+
+```sh
+./llama-server -hf unsloth/Qwen3.8-27B-GGUF:Q4_K_XL \
+  --parallel 1 --ctx-size 131072 --predict 131072 --ubatch-size 1024 \
+  --temp 0.7 --min-p 0.0 --top-p 0.8 --top-k 20 --presence-penalty 1.5 --no-mmproj \
+  --cache-type-k q8_0 --cache-type-v q8_0 --load-mode dio --spec-type draft-mtp
+```
+
+**Gemma4 26B A4B**
+
+```sh
+./llama-server -hf unsloth/gemma-4-26B-A4B-it-qat-GGUF:UD-Q4_K_XL \
+  --parallel 1 --ctx-size 131072 --predict 131072 --ubatch-size 1024 \
+  --temp 1.0 --top-p 0.95 --top-k 64 --no-mmproj \
+  --cache-type-k q8_0 --cache-type-v q8_0 --load-mode dio --spec-type draft-mtp
+```
+
+**Mellum2 12B A2.5B**
+
+```sh
+./llama-server -hf JetBrains/Mellum2-12B-A2.5B-Thinking-GGUF-Q4_K_M \
+  --parallel 1 --ctx-size 131072 --predict 131072 --ubatch-size 1024 \
+  --temp 0.6 --top-p 0.95 --top-k 20 --cache-type-k q8_0 \
+  --cache-type-v q8_0 --load-mode dio
+```
+
 ## Options
 
 | Option             | Type       | Default | Description                                                              |
