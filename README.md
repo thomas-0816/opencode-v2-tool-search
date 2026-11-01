@@ -50,14 +50,7 @@ opencode.json:
 ```jsonc
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugins": [
-    {
-      "package": "<path-to-plugin>/opencode-v2-tool-search",
-      "options": {
-        "alwaysLoad": ["shell", "read", "edit", "write", "glob", "grep"]
-      },
-    },
-  ],
+  "plugins": ["<path-to-plugin>/opencode-v2-tool-search"],
 }
 ```
 
@@ -123,14 +116,7 @@ opencode.json:
     { "action": "opencode_worktree_create", "resource": "*", "effect": "deny" },
     { "action": "opencode_worktree_list", "resource": "*", "effect": "deny" }
   ],
-  "plugins": [
-    {
-      "package": "../opencode-v2-tool-search",
-      "options": {
-        "alwaysLoad": ["shell", "read", "edit", "write", "glob", "grep"]
-      }
-    }
-  ],
+  "plugins": ["../opencode-v2-tool-search"],
   "agents": {
     "build": { "system": "A helpful software assistant." },
     "plan": { "system": "A helpful software assistant." },
