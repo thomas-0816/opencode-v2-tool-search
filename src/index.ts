@@ -271,6 +271,21 @@ export default Plugin.define({
     // Keep the unmodified snapshot so search results include full schemas.
     const snapshots = new Map<string, ToolEntry[]>()
 
+    // Tools that the model has already discovered in this session. They are
+    // loaded with their full description and schema on later requests, so the
+    // model can actually pass arguments once it has searched for the tool.
+    const discovered = new Map<string, Set<string>>()
+
+    function remember(sessionID: string, ids: readonly string[]) {
+      if (ids.length === 0) return
+      let set = discovered.get(sessionID)
+      if (!set) {
+        set = new Set()
+        discovered.set(sessionID, set)
+      }
+      for (const id of ids) set.add(id)
+    }
+
     function capture(sessionID: string, tools: Record<string, { description: string; input: JsonSchema }>) {
       const entries: ToolEntry[] = []
       for (const [id, tool] of Object.entries(tools)) {
@@ -302,6 +317,8 @@ export default Plugin.define({
       if (removeWorktreeHint) stripWorktreeHint(event.system)
       capture(event.sessionID, event.tools)
 
+      const loaded = discovered.get(event.sessionID)
+      const deferredNames: string[] = []
       let total = 0
       let deferred = 0
       for (const [id, tool] of Object.entries(event.tools)) {
@@ -317,15 +334,19 @@ export default Plugin.define({
           continue
         }
 
+        // A tool the model already searched for stays fully loadable.
+        if (loaded?.has(id)) continue
+
         tool.description = deferDescription
         if (stripParameters) tool.input = { type: "object", properties: {} }
+        deferredNames.push(id)
         deferred++
       }
 
       if (deferred > 0) {
         event.system.push({
           type: "text",
-          text: `[Tool Search] ${deferred}/${total} tools are deferred ("${deferDescription}"). Call tool_search("<keywords>") before using one; search if unsure.`,
+          text: `[Tool Search] ${deferred}/${total} tools are deferred ("${deferDescription}"): ${deferredNames.join(", ")}. Call tool_search("<keywords>") to load one before using it; searching also makes it callable on the next turn.`,
         })
       }
     }
@@ -349,6 +370,7 @@ export default Plugin.define({
           if (results.length === 0) {
             return { content: `No tools found matching "${query}". Try broader keywords.` }
           }
+          remember(context.sessionID, results.map((entry) => entry.id))
           return {
             content: `Found ${results.length} tool(s):\n\n${formatResults(results, includeSchema)}`,
           }
@@ -385,6 +407,7 @@ export default Plugin.define({
           if (results.length === 0) {
             return { content: `No tools matched pattern "${pattern}". Try a different regex.` }
           }
+          remember(context.sessionID, results.map((entry) => entry.id))
           return {
             content: `Found ${results.length} tool(s):\n\n${formatResults(results, includeSchema)}`,
           }

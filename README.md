@@ -33,6 +33,10 @@ or `tool_search_regex` and gets the full description and JSON Schema back.
   regex.
 - Search results include the full description, a parameter summary, and the full
   JSON Schema.
+- Searched tools are remembered per session. On later requests they are sent with
+  their full description and schema, so the model can pass arguments correctly.
+- The system hint lists the deferred tool names, so the model knows what to
+  search for.
 - The same transformation runs for `context`, `compaction`, and `generate`
   requests.
 
@@ -298,7 +302,9 @@ If either file already exists, merge the key into its existing JSON object.
 ## Caveats
 
 - The model must search before calling a deferred tool. The plugin adds a short
-  system instruction explaining this.
+  system instruction that lists the deferred tools and explains this.
+- A tool that has been searched stays fully loaded for the rest of the session,
+  so savings are largest early in a session and shrink as more tools are used.
 - With `stripParameters: true`, keep `includeSchema: true` so the model can
   recover the full schema from the search result.
 - If Code Mode is enabled, the `execute` tool is deferred like any other tool.
